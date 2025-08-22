@@ -1,179 +1,247 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Deepfake Video Detection</title>
+    <title>DART - Deepfake Analysis and Realism Test</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f1f1f1;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
         }
- 
+
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        }
+
         h1 {
             text-align: center;
-            margin-top: 30px;
-        }
-        
-        .container {
-            display: flex;
-            justify-content: space-around;
-            flex-wrap: wrap;
-            margin-top: 50px;
+            margin-bottom: 10px;
+            font-size: 2.5em;
         }
 
-        .section {
-            width: 45%;
+        .subtitle {
             text-align: center;
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            margin-bottom: 20px;
+            margin-bottom: 30px;
+            opacity: 0.8;
+            font-size: 1.1em;
         }
 
-        .input-container {
-            margin-bottom: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .input-container input[type="file"] {
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 3px;
-            font-size: 16px;
-            width: 100%;
-            box-sizing: border-box;
-            display: inline-block;
-            max-width: 80%;
-        }
-
-        .preview-container {
+        .upload-area {
+            border: 2px dashed rgba(255, 255, 255, 0.5);
+            border-radius: 10px;
+            padding: 40px;
             text-align: center;
             margin: 20px 0;
+            transition: all 0.3s ease;
         }
 
-        .preview-container video {
-            max-width: 100%;
+        .upload-area:hover {
+            border-color: rgba(255, 255, 255, 0.8);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        input[type="file"] {
+            margin: 20px 0;
+            padding: 10px;
+            border: none;
             border-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-            display: none;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            width: 100%;
         }
 
         button {
-            background-color: #007BFF;
-            color: #fff;
-            padding: 10px 20px;
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
             border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
             cursor: pointer;
             font-size: 16px;
-            border-radius: 3px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 20px;
         }
 
         button:hover {
-            background-color: #0056b3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
         }
 
-        .spinner {
-            display: none;
-            text-align: center;
-        }
-
-        .spinner img {
-            width: 50px;
-            height: 50px;
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
         }
 
         .result {
-            margin-top: 20px;
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 10px;
             text-align: center;
-            font-weight: bold;
+            font-size: 1.2em;
+            display: none;
+        }
+
+        .result.real {
+            background: rgba(46, 204, 113, 0.3);
+            border: 2px solid #2ecc71;
+        }
+
+        .result.fake {
+            background: rgba(231, 76, 60, 0.3);
+            border: 2px solid #e74c3c;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid white;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .info {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .info h3 {
+            margin-top: 0;
         }
     </style>
 </head>
+
 <body>
-    <h1>Deepfake Video Detection</h1>
-
     <div class="container">
-        <div class="section">
-            <h2>Upload Video</h2>
-            <div class="input-container">
-                <input type="file" id="videoInput" accept="video/*" onchange="previewVideo(event)">
-            </div>
+        <h1>🎭 DART</h1>
+        <p class="subtitle">Deepfake Analysis and Realism Test</p>
 
-            <div class="preview-container">
-                <video id="videoPlayer" controls></video>
-            </div>
+        <div class="upload-area">
+            <h3>📹 Upload Video for Analysis</h3>
+            <p>Select a video file to analyze for deepfake detection</p>
+            <form id="uploadForm" enctype="multipart/form-data">
+                <input type="file" id="videoFile" name="video" accept="video/*" required>
+                <button type="submit" id="analyzeBtn">🔍 Analyze Video</button>
+            </form>
+        </div>
 
-            <button onclick="submitVideo()">Detect Deepfake</button>
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Analyzing video... This may take a moment.</p>
+        </div>
 
-            <div class="spinner" id="videoSpinner">
-                <img src="static/spinner1.gif" alt="Loading...">
-            </div>
+        <div class="result" id="result">
+            <h3 id="resultTitle"></h3>
+            <p id="resultText"></p>
+            <p id="confidenceText"></p>
+        </div>
 
-            <div class="result" id="detectionResult">
-                <!-- Result will be displayed here -->
-            </div>
+        <div class="info">
+            <h3>ℹ️ How it works</h3>
+            <ul>
+                <li><strong>AI-Powered:</strong> Uses deep learning models to analyze video frames</li>
+                <li><strong>Feature Extraction:</strong> Employs InceptionV3 CNN for advanced feature detection</li>
+                <li><strong>Real-time Analysis:</strong> Processes up to 20 frames for comprehensive analysis</li>
+                <li><strong>Confidence Score:</strong> Provides probability-based results</li>
+            </ul>
         </div>
     </div>
 
     <script>
-        function previewVideo(event) {
-            const videoInput = document.getElementById('videoInput');
-            const videoPlayer = document.getElementById('videoPlayer');
-            const file = videoInput.files[0];
+        document.getElementById('uploadForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
 
-            if (file) {
-                const url = URL.createObjectURL(file);
-                videoPlayer.src = url;
-                videoPlayer.style.display = 'block';
-            }
-        }
+            const fileInput = document.getElementById('videoFile');
+            const file = fileInput.files[0];
 
-        function submitVideo() {
-            const videoInput = document.getElementById('videoInput');
-            const videoPlayer = document.getElementById('videoPlayer');
-            const videoSpinner = document.getElementById('videoSpinner');
-            const detectionResult = document.getElementById('detectionResult');
-
-            const file = videoInput.files[0];
             if (!file) {
-                alert('Please upload a video file.');
+                alert('Please select a video file');
                 return;
             }
 
-            // Show the spinner while waiting for the response
-            videoSpinner.style.display = 'block';
+            // Show loading
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('result').style.display = 'none';
+            document.getElementById('analyzeBtn').disabled = true;
+            document.getElementById('analyzeBtn').textContent = 'Analyzing...';
 
-            // Remove previous results
-            detectionResult.innerHTML = '';
-
-            // Create a new FormData object
             const formData = new FormData();
             formData.append('video', file);
 
-            // Create the request object
-            fetch('/predict', {
-                method: 'POST',
-                body: formData,
-            })
-            .then(response => response.json())
-            .then(data => {
-                // Hide the spinner
-                videoSpinner.style.display = 'none';
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    body: formData
+                });
 
-                // Display the prediction result
-                const resultText = `Result: ${data.result} <br> Confidence: ${data.confidence.toFixed(2)}`;
-                detectionResult.innerHTML = resultText;
-            })
-            .catch(error => {
+                const data = await response.json();
+
+                // Hide loading
+                document.getElementById('loading').style.display = 'none';
+
+                // Show result
+                const resultDiv = document.getElementById('result');
+                const resultTitle = document.getElementById('resultTitle');
+                const resultText = document.getElementById('resultText');
+                const confidenceText = document.getElementById('confidenceText');
+
+                if (data.result === 'REAL') {
+                    resultDiv.className = 'result real';
+                    resultTitle.textContent = '✅ REAL VIDEO';
+                    resultText.textContent = 'This video appears to be authentic.';
+                } else {
+                    resultDiv.className = 'result fake';
+                    resultTitle.textContent = '⚠️ DEEPFAKE DETECTED';
+                    resultText.textContent = 'This video may be artificially generated.';
+                }
+
+                confidenceText.textContent = `Confidence: ${(data.confidence * 100).toFixed(1)}%`;
+                resultDiv.style.display = 'block';
+
+            } catch (error) {
                 console.error('Error:', error);
-                detectionResult.innerHTML = 'An error occurred while processing the video.';
-                videoSpinner.style.display = 'none';
-            });
-        }
+                alert('Error analyzing video. Please try again.');
+                document.getElementById('loading').style.display = 'none';
+            }
+
+            // Reset button
+            document.getElementById('analyzeBtn').disabled = false;
+            document.getElementById('analyzeBtn').textContent = '🔍 Analyze Video';
+        });
     </script>
 </body>
+
 </html>
