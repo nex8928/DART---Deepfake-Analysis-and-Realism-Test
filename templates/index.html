@@ -1,202 +1,589 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DART - Deepfake Analysis and Realism Test</title>
+    <title>DART - AI Deepfake Detection</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --primary-color: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary-color: #f1f5f9;
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+            --warning-color: #f59e0b;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --text-muted: #94a3b8;
+            --border-color: #e2e8f0;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            color: white;
+            color: var(--text-primary);
+            line-height: 1.6;
         }
 
         .container {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 30px;
-            border-radius: 15px;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .logo-icon {
+            width: 48px;
+            height: 48px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
             backdrop-filter: blur(10px);
-            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
         }
 
-        h1 {
-            text-align: center;
-            margin-bottom: 10px;
-            font-size: 2.5em;
+        .logo-text {
+            font-size: 2rem;
+            font-weight: 700;
+            color: white;
+            letter-spacing: -0.025em;
         }
 
-        .subtitle {
-            text-align: center;
-            margin-bottom: 30px;
-            opacity: 0.8;
-            font-size: 1.1em;
+        .tagline {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1.125rem;
+            font-weight: 400;
+            margin-bottom: 0.5rem;
+        }
+
+        .description {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.875rem;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .main-card {
+            background: var(--bg-primary);
+            border-radius: 24px;
+            padding: 2.5rem;
+            box-shadow: var(--shadow-xl);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .upload-section {
+            margin-bottom: 2rem;
         }
 
         .upload-area {
-            border: 2px dashed rgba(255, 255, 255, 0.5);
-            border-radius: 10px;
-            padding: 40px;
+            border: 2px dashed var(--border-color);
+            border-radius: 16px;
+            padding: 3rem 2rem;
             text-align: center;
-            margin: 20px 0;
-            transition: all 0.3s ease;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
         }
 
-        .upload-area:hover {
-            border-color: rgba(255, 255, 255, 0.8);
-            background: rgba(255, 255, 255, 0.05);
+        .upload-area::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .upload-area:hover::before,
+        .upload-area.dragover::before {
+            opacity: 0.05;
+        }
+
+        .upload-area:hover,
+        .upload-area.dragover {
+            border-color: var(--primary-color);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .upload-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .upload-icon {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 1.5rem;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.75rem;
+            color: white;
+            box-shadow: var(--shadow-md);
+        }
+
+        .upload-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .upload-subtitle {
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        .upload-formats {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .format-tag {
+            background: var(--secondary-color);
+            color: var(--text-secondary);
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
         }
 
         input[type="file"] {
-            margin: 20px 0;
-            padding: 10px;
-            border: none;
-            border-radius: 5px;
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            width: 100%;
-        }
-
-        button {
-            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            border-radius: 25px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: bold;
-            transition: all 0.3s ease;
-            width: 100%;
-            margin-top: 20px;
-        }
-
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-        }
-
-        button:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .result {
-            margin-top: 30px;
-            padding: 20px;
-            border-radius: 10px;
-            text-align: center;
-            font-size: 1.2em;
             display: none;
         }
 
-        .result.real {
-            background: rgba(46, 204, 113, 0.3);
-            border: 2px solid #2ecc71;
+        .btn {
+            width: 100%;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
         }
 
-        .result.fake {
-            background: rgba(231, 76, 60, 0.3);
-            border: 2px solid #e74c3c;
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            color: white;
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
         }
 
         .loading {
             display: none;
             text-align: center;
-            margin-top: 20px;
+            padding: 2rem 0;
         }
 
-        .spinner {
-            border: 4px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top: 4px solid white;
+        .loading-spinner {
             width: 40px;
             height: 40px;
+            margin: 0 auto 1rem;
+            border: 3px solid var(--secondary-color);
+            border-top: 3px solid var(--primary-color);
+            border-radius: 50%;
             animation: spin 1s linear infinite;
-            margin: 0 auto;
         }
 
         @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
 
-            100% {
-                transform: rotate(360deg);
+        .loading-text {
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .result {
+            display: none;
+            padding: 2rem;
+            border-radius: 16px;
+            text-align: center;
+            margin-top: 2rem;
+            animation: slideUp 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
             }
         }
 
-        .info {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 20px;
-            border-radius: 10px;
-            margin-top: 20px;
+        .result.real {
+            background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+            border: 1px solid #a7f3d0;
         }
 
-        .info h3 {
-            margin-top: 0;
+        .result.fake {
+            background: linear-gradient(135deg, #fef2f2, #fecaca);
+            border: 1px solid #fca5a5;
+        }
+
+        .result-icon {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 1rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.75rem;
+        }
+
+        .result.real .result-icon {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .result.fake .result-icon {
+            background: var(--danger-color);
+            color: white;
+        }
+
+        .result-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .result.real .result-title {
+            color: #065f46;
+        }
+
+        .result.fake .result-title {
+            color: #991b1b;
+        }
+
+        .result-description {
+            margin-bottom: 1rem;
+        }
+
+        .result.real .result-description {
+            color: #047857;
+        }
+
+        .result.fake .result-description {
+            color: #dc2626;
+        }
+
+        .confidence-bar {
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            height: 8px;
+            margin: 1rem 0;
+            overflow: hidden;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            border-radius: 8px;
+            transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .result.real .confidence-fill {
+            background: linear-gradient(90deg, var(--success-color), #34d399);
+        }
+
+        .result.fake .confidence-fill {
+            background: linear-gradient(90deg, var(--danger-color), #f87171);
+        }
+
+        .confidence-text {
+            font-size: 0.875rem;
+            font-weight: 600;
+            opacity: 0.8;
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .feature {
+            text-align: center;
+        }
+
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 1rem;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.25rem;
+        }
+
+        .feature-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .feature-description {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.875rem;
+        }
+
+        @media (max-width: 640px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .main-card {
+                padding: 1.5rem;
+                border-radius: 16px;
+            }
+
+            .upload-area {
+                padding: 2rem 1rem;
+            }
+
+            .logo-text {
+                font-size: 1.5rem;
+            }
+
+            .features {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
         }
     </style>
 </head>
-
 <body>
     <div class="container">
-        <h1>🎭 DART</h1>
-        <p class="subtitle">Deepfake Analysis and Realism Test</p>
+        <header class="header">
+            <div class="logo">
+                <div class="logo-icon">🎭</div>
+                <div class="logo-text">DART</div>
+            </div>
+            <h1 class="tagline">AI-Powered Deepfake Detection</h1>
+            <p class="description">
+                Advanced machine learning technology to detect artificially generated videos with high accuracy and reliability
+            </p>
+        </header>
 
-        <div class="upload-area">
-            <h3>📹 Upload Video for Analysis</h3>
-            <p>Select a video file to analyze for deepfake detection</p>
+        <main class="main-card">
             <form id="uploadForm" enctype="multipart/form-data">
-                <input type="file" id="videoFile" name="video" accept="video/*" required>
-                <button type="submit" id="analyzeBtn">🔍 Analyze Video</button>
+                <div class="upload-section">
+                    <div class="upload-area" onclick="document.getElementById('videoFile').click()">
+                        <div class="upload-content">
+                            <div class="upload-icon">📹</div>
+                            <h3 class="upload-title">Upload Video for Analysis</h3>
+                            <p class="upload-subtitle">Drag and drop your video file or click to browse</p>
+                            <div class="upload-formats">
+                                <span class="format-tag">MP4</span>
+                                <span class="format-tag">AVI</span>
+                                <span class="format-tag">MOV</span>
+                                <span class="format-tag">MKV</span>
+                            </div>
+                        </div>
+                        <input type="file" id="videoFile" name="video" accept="video/*" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary" id="analyzeBtn">
+                    <span>🔍 Analyze Video</span>
+                </button>
             </form>
-        </div>
 
-        <div class="loading" id="loading">
-            <div class="spinner"></div>
-            <p>Analyzing video... This may take a moment.</p>
-        </div>
+            <div class="loading" id="loading">
+                <div class="loading-spinner"></div>
+                <div class="loading-text">Analyzing video with AI models...</div>
+            </div>
 
-        <div class="result" id="result">
-            <h3 id="resultTitle"></h3>
-            <p id="resultText"></p>
-            <p id="confidenceText"></p>
-        </div>
+            <div class="result" id="result">
+                <div class="result-icon" id="resultIcon"></div>
+                <h2 class="result-title" id="resultTitle"></h2>
+                <p class="result-description" id="resultDescription"></p>
+                <div class="confidence-bar">
+                    <div class="confidence-fill" id="confidenceFill"></div>
+                </div>
+                <div class="confidence-text" id="confidenceText"></div>
+            </div>
 
-        <div class="info">
-            <h3>ℹ️ How it works</h3>
-            <ul>
-                <li><strong>AI-Powered:</strong> Uses deep learning models to analyze video frames</li>
-                <li><strong>Feature Extraction:</strong> Employs InceptionV3 CNN for advanced feature detection</li>
-                <li><strong>Real-time Analysis:</strong> Processes up to 20 frames for comprehensive analysis</li>
-                <li><strong>Confidence Score:</strong> Provides probability-based results</li>
-            </ul>
-        </div>
+            <div class="features">
+                <div class="feature">
+                    <div class="feature-icon">🧠</div>
+                    <h3 class="feature-title">Deep Learning</h3>
+                    <p class="feature-description">Advanced neural networks trained on millions of video samples</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">⚡</div>
+                    <h3 class="feature-title">Real-time Analysis</h3>
+                    <p class="feature-description">Fast processing with results in seconds, not minutes</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">🎯</div>
+                    <h3 class="feature-title">High Accuracy</h3>
+                    <p class="feature-description">Industry-leading detection rates with confidence scoring</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">🔒</div>
+                    <h3 class="feature-title">Privacy First</h3>
+                    <p class="feature-description">Videos are processed locally and automatically deleted</p>
+                </div>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <p>Powered by advanced AI • Built with privacy in mind • Open source technology</p>
+        </footer>
     </div>
 
     <script>
-        document.getElementById('uploadForm').addEventListener('submit', async function (e) {
+        const uploadArea = document.querySelector('.upload-area');
+        const fileInput = document.getElementById('videoFile');
+        const form = document.getElementById('uploadForm');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const loading = document.getElementById('loading');
+        const result = document.getElementById('result');
+
+        // Enhanced drag and drop with visual feedback
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, preventDefaults, false);
+            document.body.addEventListener(eventName, preventDefaults, false);
+        });
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, unhighlight, false);
+        });
+
+        uploadArea.addEventListener('drop', handleDrop, false);
+
+        function preventDefaults(e) {
             e.preventDefault();
+            e.stopPropagation();
+        }
 
-            const fileInput = document.getElementById('videoFile');
+        function highlight() {
+            uploadArea.classList.add('dragover');
+        }
+
+        function unhighlight() {
+            uploadArea.classList.remove('dragover');
+        }
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+
+            if (files.length > 0) {
+                fileInput.files = files;
+                updateUploadText(files[0].name);
+            }
+        }
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                updateUploadText(e.target.files[0].name);
+            }
+        });
+
+        function updateUploadText(filename) {
+            const uploadTitle = document.querySelector('.upload-title');
+            const uploadSubtitle = document.querySelector('.upload-subtitle');
+            
+            uploadTitle.textContent = '✅ ' + filename;
+            uploadSubtitle.textContent = 'Click to change file or drag a new one';
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
             const file = fileInput.files[0];
-
             if (!file) {
-                alert('Please select a video file');
+                showNotification('Please select a video file', 'error');
                 return;
             }
 
-            // Show loading
-            document.getElementById('loading').style.display = 'block';
-            document.getElementById('result').style.display = 'none';
-            document.getElementById('analyzeBtn').disabled = true;
-            document.getElementById('analyzeBtn').textContent = 'Analyzing...';
+            // Validate file size (50MB limit)
+            if (file.size > 50 * 1024 * 1024) {
+                showNotification('File size must be less than 50MB', 'error');
+                return;
+            }
+
+            // Show loading state with animation
+            showLoading();
 
             const formData = new FormData();
             formData.append('video', file);
@@ -207,41 +594,104 @@
                     body: formData
                 });
 
-                const data = await response.json();
-
-                // Hide loading
-                document.getElementById('loading').style.display = 'none';
-
-                // Show result
-                const resultDiv = document.getElementById('result');
-                const resultTitle = document.getElementById('resultTitle');
-                const resultText = document.getElementById('resultText');
-                const confidenceText = document.getElementById('confidenceText');
-
-                if (data.result === 'REAL') {
-                    resultDiv.className = 'result real';
-                    resultTitle.textContent = '✅ REAL VIDEO';
-                    resultText.textContent = 'This video appears to be authentic.';
-                } else {
-                    resultDiv.className = 'result fake';
-                    resultTitle.textContent = '⚠️ DEEPFAKE DETECTED';
-                    resultText.textContent = 'This video may be artificially generated.';
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
 
-                confidenceText.textContent = `Confidence: ${(data.confidence * 100).toFixed(1)}%`;
-                resultDiv.style.display = 'block';
+                const data = await response.json();
+                
+                // Add delay for better UX
+                setTimeout(() => {
+                    showResult(data);
+                }, 1000);
 
             } catch (error) {
                 console.error('Error:', error);
-                alert('Error analyzing video. Please try again.');
-                document.getElementById('loading').style.display = 'none';
+                showNotification('Error analyzing video. Please try again.', 'error');
+                hideLoading();
+            }
+        });
+
+        function showLoading() {
+            loading.style.display = 'block';
+            result.style.display = 'none';
+            analyzeBtn.disabled = true;
+            analyzeBtn.innerHTML = '<span>🔄 Processing...</span>';
+        }
+
+        function hideLoading() {
+            loading.style.display = 'none';
+            analyzeBtn.disabled = false;
+            analyzeBtn.innerHTML = '<span>🔍 Analyze Video</span>';
+        }
+
+        function showResult(data) {
+            hideLoading();
+            
+            const resultIcon = document.getElementById('resultIcon');
+            const resultTitle = document.getElementById('resultTitle');
+            const resultDescription = document.getElementById('resultDescription');
+            const confidenceFill = document.getElementById('confidenceFill');
+            const confidenceText = document.getElementById('confidenceText');
+
+            const confidence = Math.round(data.confidence * 100);
+
+            if (data.result === 'REAL') {
+                result.className = 'result real';
+                resultIcon.textContent = '✅';
+                resultTitle.textContent = 'Authentic Video';
+                resultDescription.textContent = 'Our AI analysis indicates this video appears to be genuine and unmodified.';
+            } else {
+                result.className = 'result fake';
+                resultIcon.textContent = '⚠️';
+                resultTitle.textContent = 'Deepfake Detected';
+                resultDescription.textContent = 'Our AI analysis suggests this video may be artificially generated or manipulated.';
             }
 
-            // Reset button
-            document.getElementById('analyzeBtn').disabled = false;
-            document.getElementById('analyzeBtn').textContent = '🔍 Analyze Video';
-        });
+            // Animate confidence bar
+            setTimeout(() => {
+                confidenceFill.style.width = confidence + '%';
+            }, 100);
+
+            confidenceText.textContent = `Confidence: ${confidence}%`;
+            result.style.display = 'block';
+            
+            // Scroll to result
+            result.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        function showNotification(message, type) {
+            // Simple notification system
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 1rem 1.5rem;
+                border-radius: 8px;
+                color: white;
+                font-weight: 500;
+                z-index: 1000;
+                animation: slideIn 0.3s ease;
+                ${type === 'error' ? 'background: #ef4444;' : 'background: #10b981;'}
+            `;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        // Add CSS for notification animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+        `;
+        document.head.appendChild(style);
     </script>
 </body>
-
 </html>
